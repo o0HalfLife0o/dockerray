@@ -1,0 +1,31 @@
+name: Update Rayrayray
+on:
+  schedule:
+    - cron: 0 0 * * *
+  workflow_dispatch:
+
+jobs:
+  ray:
+    name: Update
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Check & Update
+        run: |
+          latest=$(curl -sL https://github.com/XTLS/Xray-core/releases )
+          ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
+          if ! git tag -l |grep -q "rayrayray_v$ver"; then
+            wget https://github.com/XTLS/Xray-core/releases/download/v$ver/Xray-linux-64.zip -O ray.zip
+            unzip -o ray.zip xray -d etc
+            mv -f etc/xray etc/rayrayray
+            rm -f ray.zip
+            sed -i '/url =/d' .git/config
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+            git add *rayrayray
+            git commit -m "rayrayray_v$ver"
+            git push -f -u origin master
+          fi
