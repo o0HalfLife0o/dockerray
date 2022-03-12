@@ -25,7 +25,7 @@
         },
         "CONFIGRAY": {
             "description": "自定义网络地址读取配置运行ray，不熟悉ray配置的请勿修改",
-            "value": "https://raw.githubusercontent.com/o0HalfLife0o/dockerray/master/etc/rayray.json"
+            "value": "https://raw.githubusercontent.com/o0HalfLife0o/dockerray/master/etc/rayrayray.json"
         },
         "CONFIGSMARTDNS": {
             "description": "自定义网络地址读取配置运行smartdns，不熟悉smartdns配置的请勿修改",
