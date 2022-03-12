@@ -27,10 +27,9 @@ vless 性能更加优秀，占用资源更少。
 **出于安全考量，除非使用 CDN，否则请不要使用自定义域名，而使用 Heroku 分配的二级域名，以实现 Ray vless Websocket + TLS。**
 
 <details>
-<summary>V2rayN</summary>
+<summary>*rayN</summary>
 
 ```bash
-* 客户端下载：https://github.com/2dust/v2rayN/releases
 * 代理协议：vless 或 vmess
 * 地址：xxx.herokuapp.com
 * 端口：443
@@ -47,7 +46,7 @@ vless 性能更加优秀，占用资源更少。
 </details>
 
 <details>
-<summary>Trojan-Go</summary>
+<summary>T*ojan-Go</summary>
 
 ```bash
 * 客户端下载: https://github.com/p4gefau1t/trojan-go/releases
