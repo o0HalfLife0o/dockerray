@@ -1,26 +1,42 @@
 #!/bin/sh
-
-# configs
+#config
+DIR_CONFIG="/usr/share/caddy/$AUUID"
+#caddy
 mkdir -p /etc/caddy/ /usr/share/caddy && echo -e "User-agent: *\nDisallow: /" >/usr/share/caddy/robots.txt
 wget $CADDYIndexPage -O /usr/share/caddy/index.html && unzip -qo /usr/share/caddy/index.html -d /usr/share/caddy/ && mv /usr/share/caddy/*/* /usr/share/caddy/
-wget -qO- $CONFIGCADDY | sed -e "1c :$PORT" -e "s/\$AUUID/$AUUID/g" -e "s/\$MYUUID-HASH/$(caddy hash-password --plaintext $AUUID)/g" >/etc/caddy/Caddyfile
+mkdir -p ${DIR_CONFIG}/log
+wget -qO- $CONFIGCADDY | sed -e "1c :$PORT" -e "s/\$AUUID/$AUUID/g" -e "s/\$MYUUID-HASH/$(caddy hash-password --plaintext $AUUID)/g" >${DIR_CONFIG}/Caddyfile
+caddy run --config ${DIR_CONFIG}/Caddyfile --adapter caddyfile &
+#cfst
+dd if=/dev/zero of=${DIR_CONFIG}/cfst.png bs=1M count=0 seek=300
+#smartdns
+wget -O /smartdns $PATHSMARTDNS
+chmod 755 /smartdns
+wget -qO- $CONFIGSMARTDNS | sed "s/\$AUUID/$AUUID/g" >${DIR_CONFIG}/smartdns.conf
+sed '/^nameserver/s#nameserver\ *#server #' /etc/resolv.conf|grep '^server ' >>${DIR_CONFIG}/smartdns.conf
+/smartdns -c ${DIR_CONFIG}/smartdns.conf &
+#argo
+if [ "${ArgoCERT}" = "CERT" ]; then
+  echo skip 
+else
+  wget -O /argo $PATHARGO
+  chmod 755 /argo
+  mkdir -p ${DIR_CONFIG}/argo
+  echo $ArgoCERT |base64 -d > ${DIR_CONFIG}/argo/cert.pem
+  ARGOID="$(echo $ArgoJSON |base64 -d |jq .TunnelID | sed 's/\"//g')"
+  echo $ArgoJSON |base64 -d > ${DIR_CONFIG}/argo/${ARGOID}.json
+  cat << EOF > ${DIR_CONFIG}/argo/config.yaml
+tunnel: ${ARGOID}
+credentials-file: ${DIR_CONFIG}/argo/${ARGOID}.json
+ingress:
+  - hostname: ${ArgoDOMAIN}
+    service: http://localhost:${PORT}
+  - service: http_status:404
+EOF
+  /argo --loglevel info --origincert ${DIR_CONFIG}/argo/cert.pem tunnel -config ${DIR_CONFIG}/argo/config.yaml run ${ARGOID} &
+fi
+#rayrayray
 wget -qO /rayrayray $PATHRAY
-wget -qO- $CONFIGRAY | sed "s/\$AUUID/$AUUID/g" >/rayrayray.json
-wget -qO- $CONFIGSMARTDNS | sed "s/\$AUUID/$AUUID/g" >/smartdns.conf
-sed '/^nameserver/s#nameserver\ *#server #' /etc/resolv.conf|grep '^server ' >>/smartdns.conf
-
-# storefiles
-mkdir -p /usr/share/caddy/$AUUID && wget -O /usr/share/caddy/$AUUID/StoreFiles $StoreFiles
-wget -P /usr/share/caddy/$AUUID -i /usr/share/caddy/$AUUID/StoreFiles
-# cfst
-dd if=/dev/zero of=/usr/share/caddy/$AUUID/cfst.png bs=1M count=0 seek=300
-
-mkdir -p /usr/share/caddy/$AUUID/log
-
-# start
 chmod 755 /rayrayray
-/rayrayray -config /rayrayray.json &
-
-smartdns -c /smartdns.conf &
-
-caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+wget -qO- $CONFIGRAY | sed "s/\$AUUID/$AUUID/g" >${DIR_CONFIG}/rayrayray.json
+/rayrayray -config ${DIR_CONFIG}/rayrayray.json

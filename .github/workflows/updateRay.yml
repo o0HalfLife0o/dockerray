@@ -27,6 +27,7 @@ jobs:
             git remote set-url --add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
             git add --all
             git commit -m "rayrayray_v$ver"
-            git tag "rayrayray_v$ver"
             git push -f -u origin master
+            git tag "rayrayray_v$ver"
+            git push origin "rayrayray_v$ver"
           fi
