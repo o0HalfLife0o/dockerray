@@ -2,7 +2,7 @@
   "log": {
     "loglevel": "error",
     "dnsLog": true,
-    "access": "/usr/share/caddy/$AUUID/log/ray-access.log",
+    //"access": "/usr/share/caddy/$AUUID/log/ray-access.log",
     "error": "/usr/share/caddy/$AUUID/log/ray-error.log"
   },
   "inbounds": [
@@ -79,14 +79,13 @@
     }
   ],
   "dns": {
+    "queryStrategy": "UseIPv4",
     "servers": [
       {
         "address": "127.0.0.1",
         "port": 5353
-      },
-      "localhost"
-    ],
-    "queryStrategy": "UseIPv4"
+      }
+    ]
   },
   "routing": {
     "domainStrategy": "IPOnDemand",
