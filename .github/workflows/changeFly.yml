@@ -1,0 +1,58 @@
+name: Change Fly App
+on:
+  schedule:
+    - cron: 0 19 1,16 * *
+  workflow_dispatch:
+
+jobs:
+  fly:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Change Running App
+        continue-on-error: true
+        run: |
+          #secret中FLY_APP格式为 应用名,token
+          #多个FLY_APP以;分割
+          APPNAME="$(echo "${{ secrets.FLY_APP }}" |sed 's#;# #g')"
+          unset num
+          for app in $APPNAME; do
+            num=$(( num+1 ))
+            NAME=$(echo $app |cut -d\, -f1)
+            TOKEN=$(echo $app |cut -d\, -f2)
+            if [ $num -gt 1 ]; then
+              killall flyctl
+            fi
+            if ! [ -d "~/.fly" ]; then
+              mkdir -p ~/.fly
+              echo "access_token: $TOKEN" > ~/.fly/config.yml
+            fi
+            suspendApp(){
+              if flyctl status --app "$NAME" --access-token "$TOKEN" |grep -q "running"; then
+                flyctl scale count 0 --app "$NAME" --access-token "$TOKEN"
+              else
+                echo "$NAME 未运行"
+              fi
+            }
+            resumeApp(){
+              if ! flyctl status --app "$NAME" --access-token "$TOKEN" |grep -q "running"; then
+                flyctl scale count 1 --app "$NAME" --access-token "$TOKEN"
+              else
+                echo "$NAME 已经正在运行"
+              fi
+            }
+            if [ "$(date +%d)" -le 15 ]; then
+              if [ $num -eq 1 ]; then
+                resumeApp
+              else
+                suspendApp
+              fi
+            else
+              if [ $num -eq 1 ]; then
+                suspendApp
+              else
+                resumeApp
+              fi
+            fi
+          done

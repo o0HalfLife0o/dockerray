@@ -1,8 +1,8 @@
 {
   "log": {
-    "loglevel": "error",
-    "dnsLog": true,
-    //"access": "/usr/share/caddy/$AUUID/log/ray-access.log",
+    "loglevel": "warning",
+    "dnsLog": false,
+    "access": "/usr/share/caddy/$AUUID/log/ray-access.log",
     "error": "/usr/share/caddy/$AUUID/log/ray-error.log"
   },
   "inbounds": [
@@ -11,9 +11,7 @@
       "protocol": "vmess",
       "settings": {
         "clients": [
-          {
-            "id": "$AUUID"
-          }
+          {"id": "$AUUID"}
         ]
       },
       "streamSettings": {
@@ -32,9 +30,7 @@
       "protocol": "vless",
       "settings": {
         "clients": [
-          {
-            "id": "$AUUID"
-          }
+          {"id": "$AUUID"}
         ],
         "decryption": "none"
       },
@@ -75,7 +71,17 @@
     {
       "protocol": "freedom",
       "tag": "direct",
-      "settings": {}
+      "settings": {
+        "domainStrategy": "UseIPv4"
+      }
+    },{
+      "protocol":"blackhole",
+      "tag":"block",
+      "settings":{
+        "response":{
+          "type":"http"
+        }
+      }
     }
   ],
   "dns": {
@@ -88,16 +94,12 @@
     ]
   },
   "routing": {
-    "domainStrategy": "IPOnDemand",
+    "domainStrategy": "AsIs",
     "domainMatcher": "mph",
     "rules": [
-      {
-        "type": "field",
-        "ip": [
-          "8.8.8.8"
-        ],
-        "outboundTag": "direct"
-      }
+      #{"type": "field","domain": ["ext:geosite.dat:cn"],"email": "love@rayrayray.com","outboundTag": "block"},
+      #{"type": "field","ip": ["ext:cn.dat:cn"],"email": "love@rayrayray.com","outboundTag": "block"},
+      {"type": "field","ip": ["8.8.8.8","8.8.4.4","1.1.1.1","1.0.0.1"],"outboundTag": "direct"}
     ]
   }
 }

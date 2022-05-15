@@ -23,6 +23,16 @@
             "description": "自定义网络地址读取配置运行ray，不熟悉ray配置的请勿修改",
             "value": "https://raw.githubusercontent.com/o0HalfLife0o/dockerray/master/etc/rayrayray.json"
         },
+        "GEOSITE": {
+            "description": "自定义网络地址下载geosite.dat",
+            "required": false,
+            "value": "#https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+        },
+        "GEOIP_CN": {
+            "description": "自定义网络地址下载geoip cn.dat",
+            "required": false,
+            "value": "#https://raw.githubusercontent.com/Loyalsoldier/geoip/release/cn.dat"
+        },
         "PATHSMARTDNS": {
             "description": "自定义网络地址以下载smartdns，不熟悉smartdns配置的请勿修改",
             "value": "https://github.com/pymumu/smartdns/releases/latest/download/smartdns-x86_64"
