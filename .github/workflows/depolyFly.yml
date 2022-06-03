@@ -32,10 +32,10 @@ jobs:
               mkdir -p ~/.fly
               echo "access_token: $TOKEN" > ~/.fly/config.yml
             fi
-            appStatus=$(flyctl status --app "$NAME" --access-token "$TOKEN")
-            if echo "$appStatus" |grep -q "running"; then
+            appStatus=$(flyctl list apps --access-token "$TOKEN")
+            if echo "$appStatus" |grep -q "$NAME.*running"; then
               flyctl deploy --detach --remote-only --region "sin" --access-token "$TOKEN"
-            elif echo "$appStatus" |grep -q "dead"; then
+            elif echo "$appStatus" |grep -q "$NAME.*dead"; then
               flyctl scale count 1 --app "$NAME" --access-token "$TOKEN"
               flyctl deploy --remote-only --region "sin" --access-token "$TOKEN"
               flyctl scale count 0 --app "$NAME" --access-token "$TOKEN"
