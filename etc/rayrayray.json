@@ -68,21 +68,8 @@
     }
   ],
   "outbounds": [
-    {
-      "protocol": "freedom",
-      "tag": "direct",
-      "settings": {
-        "domainStrategy": "UseIPv4"
-      }
-    },{
-      "protocol":"blackhole",
-      "tag":"block",
-      "settings":{
-        "response":{
-          "type":"http"
-        }
-      }
-    }
+    {"protocol":"freedom","tag":"direct","settings":{"domainStrategy":"UseIPv4"}},
+    {"protocol":"blackhole","tag":"block","settings":{"response":{"type":"http"}}}
   ],
   "dns": {
     "queryStrategy": "UseIPv4",
@@ -97,8 +84,6 @@
     "domainStrategy": "AsIs",
     "domainMatcher": "mph",
     "rules": [
-      #{"type": "field","domain": ["ext:geosite.dat:cn"],"email": "love@rayrayray.com","outboundTag": "block"},
-      #{"type": "field","ip": ["ext:cn.dat:cn"],"email": "love@rayrayray.com","outboundTag": "block"},
       {"type": "field","ip": ["8.8.8.8","8.8.4.4","1.1.1.1","1.0.0.1"],"outboundTag": "direct"}
     ]
   }

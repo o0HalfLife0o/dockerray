@@ -58,18 +58,26 @@ EOF
   /argo --loglevel info --origincert ${DIR_CONFIG}/argo/cert.pem tunnel -config ${DIR_CONFIG}/argo/config.yaml run ${ARGOID} &
 fi
 #rayrayray
-wget -qO /rayrayray $PATHRAY
-chmod 755 /rayrayray
-wget -qO- $CONFIGRAY | sed -e "/id.*AUUID/c $users" -e "s/\$AUUID/$AUUID/g" >${DIR_CONFIG}/rayrayray.json
-if [ -n "${GEOSITE}" ] && ! echo ${GEOSITE} |grep -q '#' ;then
-  wget -qO /geosite.dat $GEOSITE
-  sed -i '/geosite.dat/s/#//' ${DIR_CONFIG}/rayrayray.json
-fi
-if [ -n "${GEOIP_CN}" ] && ! echo ${GEOIP_CN} |grep -q '#' ;then
-  wget -qO /cn.dat $GEOIP_CN
-  sed -i '/cn.dat/s/#//' ${DIR_CONFIG}/rayrayray.json
-fi
+RAY_DIR="${DIR_CONFIG}/ray"
+mkdir -p ${RAY_DIR}
+wget -qP ${RAY_DIR} $PATHRAY
+chmod 755 ${RAY_DIR}/rayrayray
+wget -qO- $CONFIGRAY | sed -e "/id.*AUUID/c $users" -e "s/\$AUUID/$AUUID/g" >${RAY_DIR}/rayrayray.json
+GEODATA='https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat \
+https://raw.githubusercontent.com/Loyalsoldier/geoip/release/cn.dat \
+https://raw.githubusercontent.com/Loyalsoldier/geoip/release/geoip-asn.dat'
+for i in $GEODATA; do
+  wget -qP ${RAY_DIR} $i
+done
 if [ -n "$IPV6_ON" ]; then
-  sed -i 's#UseIPv4#UseIP#' ${DIR_CONFIG}/rayrayray.json
+  sed -i 's#UseIPv4#UseIP#' ${RAY_DIR}/rayrayray.json
 fi
-/rayrayray -config ${DIR_CONFIG}/rayrayray.json
+if [ -n "$OUTBOUNDS" ]; then
+  OUTBOUNDS="$(echo "$OUTBOUNDS" |sed 's#^#\\    #')"
+  sed -i "/\"freedom\"/a $OUTBOUNDS" ${RAY_DIR}/rayrayray.json
+fi
+if [ -n "$ROUTING" ]; then
+  ROUTING="$(echo "$ROUTING" |sed 's#^#\\      #')"
+  sed -i "/\"rules\"/a $ROUTING" ${RAY_DIR}/rayrayray.json
+fi
+${RAY_DIR}/rayrayray -config ${RAY_DIR}/rayrayray.json

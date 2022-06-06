@@ -41,5 +41,14 @@ jobs:
               flyctl scale count 0 --app "$NAME" --access-token "$TOKEN"
             else
               flyctl launch --copy-config --now --name "$NAME" --region "sin" --access-token "$TOKEN"
+              #if [ "$(date +%d)" -le 15 ]; then
+              #  if [ $num -ne 1 ]; then
+              #    flyctl scale count 0 --app "$NAME" --access-token "$TOKEN"
+              #  fi
+              #else
+              #  if [ $num -eq 1 ]; then
+              #    flyctl scale count 0 --app "$NAME" --access-token "$TOKEN"
+              #  fi
+              #fi
             fi
           done
