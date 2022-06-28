@@ -16,18 +16,32 @@ jobs:
         run: |
           latest=$(curl -sL https://github.com/XTLS/Xray-core/releases )
           ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
-          if ! git tag -l |grep -q "rayrayray_v$ver"; then
+          if ! grep -q "rayrayray：$ver" README.md; then
             wget https://github.com/XTLS/Xray-core/releases/download/v$ver/Xray-linux-64.zip -O ray.zip
             unzip -o ray.zip xray -d etc
-            mv -f etc/xray etc/rayrayray
-            rm -f ray.zip
-            sed -i '/url =/d' .git/config
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git remote set-url --add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-            git add --all
-            git commit -m "rayrayray_v$ver"
-            git push -f -u origin master
-            git tag "rayrayray_v$ver"
-            git push origin "rayrayray_v$ver"
+            mv -f etc/xray rayrayray
+            echo "COMMIT_MSG=rayrayray_v$ver" >> $GITHUB_ENV
+            echo "VER=$ver" >> $GITHUB_ENV
           fi
+      - name: Release and Upload Assets
+        if: ${{ env.VER }}
+        uses: softprops/action-gh-release@v1
+        with:
+          name: rayrayray
+          tag_name: rayrayray
+          body: ${{ env.COMMIT_MSG }}
+          files: 'rayrayray'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push to master
+        if: ${{ env.VER }}
+        run: |
+          rm -f ray.zip rayrayray
+          sed -i "/+ rayrayray:/c\\+ rayrayray：${{ env.VER }}" README.md
+          sed -i '/url =/d' .git/config
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url --add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git add --all
+          git commit -m "${{ env.COMMIT_MSG }}"
+          git push -f -u origin master

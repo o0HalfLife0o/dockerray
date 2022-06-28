@@ -6,6 +6,8 @@ jobs:
   fly:
     name: Deploy
     runs-on: ubuntu-latest
+    env:
+      REGION: lax
     steps:
       - uses: actions/checkout@v3
       - uses: superfly/flyctl-actions/setup-flyctl@master
@@ -34,13 +36,13 @@ jobs:
             fi
             appStatus=$(flyctl list apps --access-token "$TOKEN")
             if echo "$appStatus" |grep -q "$NAME.*running"; then
-              flyctl deploy --detach --remote-only --region "sin" --access-token "$TOKEN"
+              flyctl deploy --detach --remote-only --region "${{ env.REGION }}" --access-token "$TOKEN"
             elif echo "$appStatus" |grep -q "$NAME.*dead"; then
               flyctl scale count 1 --app "$NAME" --access-token "$TOKEN"
-              flyctl deploy --remote-only --region "sin" --access-token "$TOKEN"
+              flyctl deploy --remote-only --region "${{ env.REGION }}" --access-token "$TOKEN"
               flyctl scale count 0 --app "$NAME" --access-token "$TOKEN"
             else
-              flyctl launch --copy-config --now --name "$NAME" --region "sin" --access-token "$TOKEN"
+              flyctl launch --copy-config --now --name "$NAME" --region "${{ env.REGION }}" --access-token "$TOKEN"
               #if [ "$(date +%d)" -le 15 ]; then
               #  if [ $num -ne 1 ]; then
               #    flyctl scale count 0 --app "$NAME" --access-token "$TOKEN"

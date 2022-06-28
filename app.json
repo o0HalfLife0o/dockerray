@@ -17,7 +17,7 @@
         },
         "PATHRAY": {
             "description": "自定义网络地址以下载ray，不熟悉ray配置的请勿修改",
-            "value": "https://raw.githubusercontent.com/o0HalfLife0o/dockerray/master/etc/rayrayray"
+            "value": "https://github.com/o0HalfLife0o/dockerray/releases/latest/download/rayrayray"
         },
         "CONFIGRAY": {
             "description": "自定义网络地址读取配置运行ray，不熟悉ray配置的请勿修改",
