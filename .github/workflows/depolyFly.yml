@@ -1,0 +1,76 @@
+name: Deploy to Fly
+on:
+  schedule:
+    - cron: 0 0 1,16 * *
+  workflow_dispatch:
+
+jobs:
+  fly:
+    name: Deploy
+    runs-on: ubuntu-latest
+    env:
+      REGION: lax
+    steps:
+      - uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Prepare & Deploy
+        id: prepare
+        continue-on-error: true
+        run: |
+          #secret中FLY_APP格式为 应用名,token
+          #多个FLY_APP以;分割
+          APPNAME="$(echo "${{ secrets.FLY_APP }}" |sed 's#;# #g')"
+          unset num
+          for app in $APPNAME; do
+            num=$(( num+1 ))
+            NAME=$(echo $app |cut -d\, -f1)
+            TOKEN=$(echo $app |cut -d\, -f2)
+            echo "::add-mask::$NAME"
+            echo "::add-mask::$TOKEN"
+            if [ "$(date +%d)" -le 15 ]; then
+              if [ $num -eq 1 ]; then
+                echo "::set-output name=START_NAME::$NAME"
+                echo "::set-output name=START_TOKEN::$TOKEN"
+              else
+                echo "::set-output name=STOP_NAME::$NAME"
+                echo "::set-output name=STOP_TOKEN::$TOKEN"
+              fi
+            else
+              if [ $num -eq 1 ]; then
+                echo "::set-output name=STOP_NAME::$NAME"
+                echo "::set-output name=STOP_TOKEN::$TOKEN"
+              else
+                echo "::set-output name=START_NAME::$NAME"
+                echo "::set-output name=START_TOKEN::$TOKEN"
+              fi
+            fi
+          done
+      - name: Start Node
+        run: |
+          rm -rf ~/.fly
+          mkdir -p ~/.fly
+          #配置参数
+          echo "access_token: ${{ steps.prepare.outputs.START_TOKEN }}" > ~/.fly/config.yml
+          sed -i "/^app /s#\".*\"#\"${{ steps.prepare.outputs.START_NAME }}\"#" fly.toml
+          sed -i "/AUUID/s#\".*\"#\"${{ secrets.AUUID }}\"#" fly.toml
+          sed -i "/ArgoCERT/s#\".*\"#\"${{ secrets.ARGOCERT }}\"#" fly.toml
+          sed -i "/ArgoJSON/s#\".*\"#\"${{ secrets.ARGOJSON }}\"#" fly.toml
+          sed -i "/ArgoDOMAIN/s#\".*\"#\"${{ secrets.ARGODOMAIN }}\"#" fly.toml
+          #检查状态并部署后启动
+          appStatus=$(flyctl list apps --access-token "${{ steps.prepare.outputs.START_TOKEN }}")
+          if echo "$appStatus" |grep -q "${{ steps.prepare.outputs.START_NAME }}.*running"; then
+            flyctl deploy --detach --remote-only --region "${{ env.REGION }}" --access-token "${{ steps.prepare.outputs.START_TOKEN }}"
+          elif echo "$appStatus" |grep -q "${{ steps.prepare.outputs.START_NAME }}.*dead"; then
+            flyctl scale count 1 --app "${{ steps.prepare.outputs.START_NAME }}" --access-token "${{ steps.prepare.outputs.START_TOKEN }}"
+            flyctl deploy --remote-only --region "${{ env.REGION }}" --access-token "${{ steps.prepare.outputs.START_TOKEN }}"
+          else
+            flyctl launch --copy-config --now --name "${{ steps.prepare.outputs.START_NAME }}" --region "${{ env.REGION }}" --access-token "${{ steps.prepare.outputs.START_TOKEN }}"
+          fi
+      - name: Stop Node
+        run: |
+          killall flyctl
+          rm -rf ~/.fly
+          mkdir -p ~/.fly
+          echo "access_token: ${{ steps.prepare.outputs.STOP_TOKEN }}" > ~/.fly/config.yml
+          sed -i "/^app /s#\".*\"#\"${{ steps.prepare.outputs.STOP_NAME }}\"#" fly.toml
+          flyctl scale count 0 --app "${{ steps.prepare.outputs.STOP_NAME }}" --access-token "${{ steps.prepare.outputs.STOP_TOKEN }}"

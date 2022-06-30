@@ -1,0 +1,47 @@
+name: Update Rayrayray
+on:
+  schedule:
+    - cron: 0 0 * * *
+  workflow_dispatch:
+
+jobs:
+  ray:
+    name: Update
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check & Update
+        run: |
+          latest=$(curl -sL https://github.com/XTLS/Xray-core/releases )
+          ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
+          if ! grep -q "rayrayray: $ver" README.md; then
+            wget https://github.com/XTLS/Xray-core/releases/download/v$ver/Xray-linux-64.zip -O ray.zip
+            unzip -o ray.zip xray -d etc
+            mv -f etc/xray rayrayray
+            echo "COMMIT_MSG=rayrayray_v$ver" >> $GITHUB_ENV
+            echo "VER=$ver" >> $GITHUB_ENV
+          fi
+      - name: Release and Upload Assets
+        if: ${{ env.VER }}
+        uses: ncipollo/release-action@v1
+        with:
+          name: rayrayray
+          tag: rayrayray
+          body: ${{ env.COMMIT_MSG }}
+          allowUpdates: true
+          removeArtifacts: true
+          artifacts: rayrayray
+      - name: Push to master
+        if: ${{ env.VER }}
+        run: |
+          rm -f ray.zip rayrayray
+          sed -i "/+ rayrayray:/c\\+ rayrayray: ${{ env.VER }}" README.md
+          sed -i '/url =/d' .git/config
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url --add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git add --all
+          git commit -m "${{ env.COMMIT_MSG }}"
+          git push -f -u origin master

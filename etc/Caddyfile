@@ -1,0 +1,38 @@
+:$PORT
+root * /usr/share/caddy
+file_server browse
+log {
+	output file /usr/share/caddy/$AUUID/log/caddy-access.log {
+			roll_size 1MiB
+			roll_keep 3
+		}
+	level ERROR
+}
+
+header {
+	X-Robots-Tag none
+	X-Content-Type-Options nosniff
+	X-Frame-Options DENY
+	Referrer-Policy no-referrer-when-downgrade
+}
+
+@websocket_xray_vmess {
+	header Connection *Upgrade*
+	header Upgrade websocket
+	path /$AUUID-vmess
+}
+reverse_proxy @websocket_xray_vmess unix//etc/caddy/vmess
+
+@websocket_xray_vless {
+	header Connection *Upgrade*
+	header Upgrade websocket
+	path /$AUUID-vless
+}
+reverse_proxy @websocket_xray_vless unix//etc/caddy/vless
+
+@websocket_xray_trojan {
+	header Connection *Upgrade*
+	header Upgrade websocket
+	path /$AUUID-trojan
+}
+reverse_proxy @websocket_xray_trojan unix//etc/caddy/trojan

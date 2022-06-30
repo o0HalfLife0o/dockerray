@@ -1,0 +1,90 @@
+{
+  "log": {
+    "loglevel": "warning",
+    "dnsLog": false,
+    "access": "/usr/share/caddy/$AUUID/log/ray-access.log",
+    "error": "/usr/share/caddy/$AUUID/log/ray-error.log"
+  },
+  "inbounds": [
+    {
+      "listen": "/etc/caddy/vmess",
+      "protocol": "vmess",
+      "settings": {
+        "clients": [
+          {"id": "$AUUID"}
+        ]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/$AUUID-vmess"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
+      }
+    },
+    {
+      "listen": "/etc/caddy/vless",
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {"id": "$AUUID"}
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/$AUUID-vless"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
+      }
+    },
+    {
+      "listen": "/etc/caddy/trojan",
+      "protocol": "trojan",
+      "settings": {
+        "clients": [
+          {
+            "password": "$AUUID"
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/$AUUID-trojan"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
+      }
+    }
+  ],
+  "outbounds": [
+    {"protocol":"freedom","tag":"direct","settings":{"domainStrategy":"UseIPv4"}},
+    {"protocol":"blackhole","tag":"block","settings":{"response":{"type":"http"}}}
+  ],
+  "dns": {
+    "queryStrategy": "UseIPv4",
+    "servers": [
+      {
+        "address": "127.0.0.1",
+        "port": 5353
+      }
+    ]
+  },
+  "routing": {
+    "domainStrategy": "AsIs",
+    "domainMatcher": "mph",
+    "rules": [
+      {"type": "field","ip": ["8.8.8.8","8.8.4.4","1.1.1.1","1.0.0.1"],"outboundTag": "direct"}
+    ]
+  }
+}
