@@ -59,7 +59,8 @@ jobs:
           #检查状态并部署后启动
           appStatus=$(flyctl list apps --access-token "${{ steps.prepare.outputs.START_TOKEN }}")
           if echo "$appStatus" |grep -q "${{ steps.prepare.outputs.START_NAME }}.*running"; then
-            flyctl deploy --detach --remote-only --region "${{ env.REGION }}" --access-token "${{ steps.prepare.outputs.START_TOKEN }}"
+            flyctl destroy "${{ steps.prepare.outputs.START_NAME }}" --yes --access-token "${{ steps.prepare.outputs.START_TOKEN }}"
+            flyctl launch --copy-config --now --name "${{ steps.prepare.outputs.START_NAME }}" --region "${{ env.REGION }}" --access-token "${{ steps.prepare.outputs.START_TOKEN }}"
           elif echo "$appStatus" |grep -q "${{ steps.prepare.outputs.START_NAME }}.*dead"; then
             flyctl scale count 1 --app "${{ steps.prepare.outputs.START_NAME }}" --access-token "${{ steps.prepare.outputs.START_TOKEN }}"
             flyctl deploy --remote-only --region "${{ env.REGION }}" --access-token "${{ steps.prepare.outputs.START_TOKEN }}"
@@ -73,4 +74,5 @@ jobs:
           mkdir -p ~/.fly
           echo "access_token: ${{ steps.prepare.outputs.STOP_TOKEN }}" > ~/.fly/config.yml
           sed -i "/^app /s#\".*\"#\"${{ steps.prepare.outputs.STOP_NAME }}\"#" fly.toml
-          flyctl scale count 0 --app "${{ steps.prepare.outputs.STOP_NAME }}" --access-token "${{ steps.prepare.outputs.STOP_TOKEN }}"
+          #flyctl scale count 0 --app "${{ steps.prepare.outputs.STOP_NAME }}" --access-token "${{ steps.prepare.outputs.STOP_TOKEN }}"
+          flyctl destroy "${{ steps.prepare.outputs.STOP_NAME }}" --yes --access-token "${{ steps.prepare.outputs.STOP_TOKEN }}"
